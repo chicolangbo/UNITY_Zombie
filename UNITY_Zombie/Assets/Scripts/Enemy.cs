@@ -27,22 +27,26 @@ public class Enemy : LivingEntity {
         get
         {
             // 추적할 대상이 존재하고, 대상이 사망하지 않았다면 true
-            if (targetEntity != null && !targetEntity.dead)
-            {
-                return true;
-            }
-
-            // 그렇지 않다면 false
-            return false;
+            return targetEntity != null && !targetEntity.dead;
         }
     }
 
     private void Awake() {
         // 초기화
+        pathFinder = GetComponent<NavMeshAgent>();
+        enemyAnimator = GetComponent<Animator>();
+        enemyAudioPlayer = GetComponent<AudioSource>();
+        enemyRenderer = GetComponentInChildren<Renderer>();
     }
 
     // 적 AI의 초기 스펙을 결정하는 셋업 메서드
     public void Setup(float newHealth, float newDamage, float newSpeed, Color skinColor) {
+
+        startingHealth = newHealth;
+        health = newHealth;
+        damage = newDamage;
+        pathFinder.speed = newSpeed;
+        enemyRenderer.material.color = skinColor;
     }
 
     private void Start() {
@@ -60,6 +64,27 @@ public class Enemy : LivingEntity {
         // 살아있는 동안 무한 루프
         while (!dead)
         {
+            if(hasTarget)
+            {
+                pathFinder.isStopped = false;
+                pathFinder.SetDestination(targetEntity.transform.position);
+            }
+            else
+            {
+                pathFinder.isStopped=true;
+                Collider[] colliders = Physics.OverlapSphere(transform.position, 20f, whatIsTarget); // 내 위치로부터 반경이 20인 구를 만들고, 그 안에 들어오는 충돌체들을 배열형으로 리턴
+
+                for(int i = 0; i < colliders.Length; i++)
+                {
+                    var livingEntity = colliders[i].GetComponent<LivingEntity>();
+                    if(livingEntity != null && !livingEntity.dead)
+                    {
+                        targetEntity = livingEntity;
+                        break;
+                    }
+                }
+            }
+
             // 0.25초 주기로 처리 반복
             yield return new WaitForSeconds(0.25f);
         }
@@ -69,12 +94,32 @@ public class Enemy : LivingEntity {
     public override void OnDamage(float damage, Vector3 hitPoint, Vector3 hitNormal) {
         // LivingEntity의 OnDamage()를 실행하여 데미지 적용
         base.OnDamage(damage, hitPoint, hitNormal);
+
+        if (!dead)
+        {
+            hitEffect.transform.position = hitPoint;
+            hitEffect.transform.rotation = Quaternion.LookRotation(hitNormal);
+            hitEffect.Play();
+            enemyAudioPlayer.PlayOneShot(hitSound);
+        }
     }
 
     // 사망 처리
     public override void Die() {
         // LivingEntity의 Die()를 실행하여 기본 사망 처리 실행
         base.Die();
+
+        var colls = GetComponents<Collider>();
+        foreach(var coll in colls)
+        {
+            coll.enabled = false;
+        }
+
+        pathFinder.isStopped = true;
+        pathFinder.enabled = false;
+
+        enemyAudioPlayer.PlayOneShot(deathSound);
+        enemyAnimator.SetTrigger("Die");
     }
 
     private void OnTriggerStay(Collider other) {
