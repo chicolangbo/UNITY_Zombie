@@ -108,6 +108,7 @@ public class Enemy : LivingEntity {
     public override void Die() {
         // LivingEntity의 Die()를 실행하여 기본 사망 처리 실행
         base.Die();
+        Debug.Log("die");
 
         var colls = GetComponents<Collider>();
         foreach(var coll in colls)
@@ -123,6 +124,13 @@ public class Enemy : LivingEntity {
     }
 
     private void OnTriggerStay(Collider other) {
-        // 트리거 충돌한 상대방 게임 오브젝트가 추적 대상이라면 공격 실행   
+        // 트리거 충돌한 상대방 게임 오브젝트가 추적 대상이라면 공격 실행
+
+        if ((Time.time > lastAttackTime + timeBetAttack) && (other.gameObject == targetEntity.gameObject))
+        {
+            lastAttackTime = Time.time;
+            var target = other.GetComponent<PlayerHealth>();
+            target.OnDamage(damage, Vector3.zero, Vector3.zero);
+        }
     }
 }

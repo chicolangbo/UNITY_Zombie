@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using UnityEngine;
+using System;
 
 // 총을 구현한다
 public class Gun : MonoBehaviour {
@@ -34,6 +35,8 @@ public class Gun : MonoBehaviour {
     public float timeBetFire = 0.12f; // 총알 발사 간격
     public float reloadTime = 1.8f; // 재장전 소요 시간
     private float lastFireTime; // 총을 마지막으로 발사한 시점
+
+    public event Action onCompleteReload;
 
 
     private void Awake() {
@@ -138,5 +141,11 @@ public class Gun : MonoBehaviour {
 
         // 총의 현재 상태를 발사 준비된 상태로 변경
         state = State.Ready;
+
+        // 리로드
+        if(onCompleteReload != null)
+        {
+            onCompleteReload();
+        }
     }
 }

@@ -44,6 +44,9 @@ public class LivingEntity : MonoBehaviour, IDamageable {
     // 사망 처리
     public virtual void Die() {
         // onDeath 이벤트에 등록된 메서드가 있다면 실행
+
+        Debug.Log("base die");
+
         if (onDeath != null) // 참조하는 메서드 있는지 없는지 검사
         {
             onDeath();

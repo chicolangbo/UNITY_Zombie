@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Runtime.CompilerServices;
+using UnityEngine;
 using UnityEngine.SceneManagement; // 씬 관리자 관련 코드
 using UnityEngine.UI; // UI 관련 코드
 
@@ -11,7 +12,7 @@ public class UIManager : MonoBehaviour {
         {
             if (m_instance == null)
             {
-                m_instance = FindObjectOfType<UIManager>();
+                m_instance = FindObjectOfType<UIManager>(); // 씬에 배치돼있는 모든 게임오브젝트 순회하기 때문에 사용 X
             }
 
             return m_instance;

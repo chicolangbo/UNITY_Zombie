@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 // 적 게임 오브젝트를 주기적으로 생성
 public class EnemySpawner : MonoBehaviour {
@@ -20,6 +22,11 @@ public class EnemySpawner : MonoBehaviour {
 
     private List<Enemy> enemies = new List<Enemy>(); // 생성된 적들을 담는 리스트
     private int wave; // 현재 웨이브
+
+    private void Awake()
+    {
+        Debug.Log("enemyspawn");
+    }
 
     private void Update() {
         // 게임 오버 상태일때는 생성하지 않음
@@ -46,9 +53,40 @@ public class EnemySpawner : MonoBehaviour {
 
     // 현재 웨이브에 맞춰 적을 생성
     private void SpawnWave() {
+        ++wave;
+
+        int count = Mathf.RoundToInt(wave * 1.5f); //실수 반올림
+
+        for(int i = 0; i< count; ++i) 
+        {
+            float enemyInstensity = Random.Range(0f, 1f);
+            CreateEnemy(enemyInstensity);
+        }
     }
 
     // 적을 생성하고 생성한 적에게 추적할 대상을 할당
     private void CreateEnemy(float intensity) {
+        var health = Mathf.Lerp(healthMin, healthMax, intensity);
+        var damage = Mathf.Lerp(damageMin, damageMax, intensity);
+        var speed = Mathf.Lerp(speedMin, speedMax, intensity);
+        var color = Color.Lerp(Color.white, strongEnemyColor, intensity);
+        var point = spawnPoints[Random.Range(0, spawnPoints.Length)];
+
+        var enemy = Instantiate(enemyPrefab, point.position, point.rotation);
+        enemy.Setup(health, damage, speed, color);
+        enemies.Add(enemy);
+
+        enemy.onDeath += () =>
+        {
+            Debug.Log("death");
+            enemies.Remove(enemy);
+            Destroy(enemy.gameObject, 10f);
+            GameManager.instance.AddScore(100);
+        };
+
+        // 위와 동일
+        //enemy.onDeath += () => enemies.Remove(enemy);
+        //enemy.onDeath += () => Destroy(enemy.gameObject, 10f);
+        //enemy.onDeath += () => GameManager.instance.AddScore(100);
     }
 }
